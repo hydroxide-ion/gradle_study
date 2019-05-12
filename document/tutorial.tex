@@ -1,0 +1,557 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{graphicx}
+\usepackage{listings,jlisting}
+
+\renewcommand{\lstlistingname}{Code}
+
+\lstset{
+ %basicstyle={\fontfamily{pcr}\selectfont\scriptsize},
+ basicstyle = {\ttfamily\selectfont\scriptsize},
+ %identifierstyle={\small},
+ commentstyle={\scriptsize\itshape},
+ keywordstyle={\scriptsize\bfseries},
+ ndkeywordstyle={\scriptsize},
+ stringstyle={\scriptsize\ttfamily},
+ frame={tblr},
+ breaklines=true,
+ keepspaces=true,
+ basewidth=0.6em,
+ columns=[l]{fullflexible},
+ %columns=fixed,
+ xrightmargin=0zw,
+ xleftmargin=3zw,
+ stepnumber=1,
+ numbersep=1zw,
+ aboveskip=1zw,
+ belowskip=2zw,
+ tabsize=4,
+ showstringspaces=\false
+}
+
+\lstnewenvironment{java}[1][]{
+\lstset{
+ language=Java,
+ caption=\lstname #1
+}}{}
+
+\lstnewenvironment{shell}[1][]{
+\lstset{
+ language=bash,
+ caption=\lstname #1
+}}{}
+
+\lstnewenvironment{sql}[1][]{
+\lstset{
+ language=SQL,
+ caption=\lstname #1
+}}{}
+
+
+%\topmargin 10mm
+\topmargin -5mm
+%\textheight 224mm
+\textheight 250mm
+\oddsidemargin 0mm
+\evensidemargin 0mm
+%\textwidth 164mm
+\textwidth 165mm
+\parskip 0mm
+\pagestyle{empty}
+\renewcommand{\baselinestretch}{1.2}
+\renewcommand{\rmdefault}{ptm}
+
+
+\begin{document}
+%####
+\begin{center}
+{\Large \bf Tutorial of Gradle \\[1.5em]}
+{\it Hydroxide
+} \\[0.5ex]
+{\it Not Broccoli, Abstraction of triangular pyramid.
+}
+\end{center}
+%####
+\quad \vspace{2ex}
+
+\begin{abstract}
+
+本書ではGradleの使い方について説明します。
+動作を検証した環境はLinux (Ubuntu 14.04)とCygwin (mintty 2.1.5, Windows8.1)ですが、
+他の環境にも応用できると思います。
+%他環境での動作については、情報提供していただけるとありがたいです。
+
+\end{abstract}
+
+\tableofcontents
+
+%\begin{figure}[h]
+%\begin{center}
+%\includegraphics[width=0.5\linewidth]{...}
+%\includegraphics[width=0.4\linewidth]{...}
+%\end{center}
+%\vspace{-0.5em}
+%\caption{...}
+%\label{fig1}
+%\end{figure}
+\newpage
+
+\section{Gradleのセットアップ}
+
+\subsection{Javaの確認}
+
+　GradleにはJava JDKが必要なので、まずはこれが入っているか確認します。
+確認のためにターミナルで
+\begin{shell}[Javaのバージョン確認]
+＄ java -version
+\end{shell}
+と打ち込みます。
+Javaのバージョンは1.8.0（Java8）以降であることが前提なので、
+Javaが新しくなければ更新します。
+
+\subsubsection{Ubuntu14.04の場合}
+　本節はUbuntu14.04でのjdkのセットアップ方法です。
+手軽に入手できるOpenJDK(version 11.0)を導入します。
+以下のコマンドはubuntuのパッケージマネージャーaptを用いた方法です。
+RedHat系、Cygwin、MinGW、およびMacの場合は異なります。
+情報提供求む。
+
+\begin{shell}[OpenJDK11.0のインストール(Ubuntu14.04の場合)]
+＄ sudo apt-add-repository ppa:openjdk-r/ppa
+＄ sudo apt-get update
+＄ sudo apt-get install openjdk-11-jdk
+\end{shell}
+再度バージョン確認して新しくなっていれば完了です。
+Gradleのインストール作業に移ります。
+
+\subsubsection{Cygwinその他Windows上のエミュレータの場合}
+
+OpenJDKをダウンロードしてきて好きな場所に解凍してください。
+ただし、Javaのパスの設定は
+\begin{shell}[JDKのPATHの設定]
+＄ export JAVA_HOME="/full/path/to/jdk-*.*.*"
+＄ export PATH="${JAVA_HOME}/bin:${PATH}"
+\end{shell}
+としてください。
+指定したJDKが最優先になるように、PATHの先頭に追記します。
+またJAVA\_HOMEの末尾に/を入れるとGradleがエラーを返すので、入れないよう注意してください。
+JAVA\_HOMEはフルパスでないと正常に参照されません。
+
+\subsection{Gradleの手動インストール}
+
+\subsubsection{Ubuntu14.04の場合}
+
+　Gradleのホームページ（https://gradle.org/install/）にアクセス。
+Installing manually節の、'・Complete, with docs and sources'からzipファイルをダウンロードし、
+任意の場所に解凍します。
+その後以下の通りPATHを設定します。
+
+\begin{shell}[PATHの設定]
+＄ unzip gradle-*.*.*-all.zip -d "/arbitrary/path/"
+＄ export GRADLE_HOME="path/to/gradle-*.*.*/"
+＄ export PATH="${PATH}:${GRADLE_HOME}bin"
+\end{shell}
+またホームディレクトリ下にある'.bash\_profile'あるいは'.profile'の末尾に上のexport文２つを書き足すと
+次回のログインから自動的に環境変数が設定されるので、登録しておくと便利です。
+PATHを通したら
+\begin{shell}[セットアップの確認]
+＄ gradle -v
+\end{shell}
+と打ち込みます。
+筆者の環境では
+\begin{shell}[Gradleのバージョン表示(例)]
+------------------------------------------------------------
+Gradle 5.4.1
+------------------------------------------------------------
+
+Build time:   2019-MM-dd hh:mm:ss UTC
+Revision:     **********************
+
+Kotlin:       1.3.21
+Groovy:       2.5.4
+Ant:          Apache Ant(TM) version 1.9.13 compiled on July 10 2018
+JVM:          11.0.1 (Oracle Corporation 11.0.1+13-Ubuntu-3ubuntu114.04ppa1)
+OS:           Linux 3.19.0-32-generic amd64
+
+\end{shell}
+となリます。
+似たようなものが表示されたらインストール完了です。
+
+次に、練習用のプロジェクトを格納する作業フォルダを作ります。
+名前と場所は自由でいいです。
+筆者はDocumentsの中にgradle\_studyを作ったので
+
+\begin{shell}[作業フォルダの作成]
+＄ cd ~/Documents
+＄ mkdir gradle_study
+＄ cd gradle_study
+\end{shell}
+となります。
+本書で作成するプロジェクトは皆この中に格納します。
+プロジェクトの作成に関しては、自動で作成する方法
+\begin{shell}[楽な方法]
+＄ gradle init --type java-application
+\end{shell}
+がありますが、ここではgradleの理解のために手動でプロジェクトを作っていきます。
+
+\subsubsection{Cygwinの場合}
+
+　本節ではWindowsでGitbashを用いた場合の、Gradleのインストール手順を解説します。
+なのでCygwinは入っていることが前提となります。
+また本節の手順はGitbash(MINGW)でも使えると思います。
+CygwinでGradleを動かすと若干重たいです。
+%Cygwin（あるいはMINGW）を使う際は、シンボリックリンクはLinuxのlnを使わずにコマンドプロンプトのmklinkを使います。
+%mklinkはWindowsのアクセサリの中にあるコマンドプロンプトを右クリックし、管理者権限で実行した上で使用します。
+
+まずはダウンロードして解凍までした(open)JDKとgradle
+（ZIPファイルは前節、Ubuntuの場合と同様にhttps://gradle.org/install/からダウンロード）を好きなところに置きます。
+本書ではホームディレクトリ下にJavaToolsというフォルダを作り、その中に入れておきます。
+あとは前節と同じです。
+上で設定したJAVA\_HOMEとGRADLE\_HOME、PATHについては、ホームディレクトリの.bash\_profileにexport文を追記しておけば
+次回起動時から自動で環境変数がセットされます。
+
+
+\section{Gradleの練習}
+
+\subsection{練習1：compileJava}
+
+　ここから先は、前章で作った作業フォルダ内での操作です。
+まずプロジェクト一号を格納するフォルダを作ります。
+名前は自由ですが、本書ではcase1とでもしておきます。
+この中にJavaのソースコードとbuild.gradleを配置します。
+ソースコードの配置場所は、自動生成した時のディレクトリ構造に従います。
+すなわち、src/main/java/下にソースコードを置きます。
+メインクラスをCase1とすると、
+\begin{shell}[プロジェクトの作成]
+＄ mkdir case1
+＄ cd case1
+＄ mkdir -p src/main/java
+＄ touch build.gradle src/main/java/Case1.java
+\end{shell}
+となります。
+Case1.Javaとbuild.gradleを作成したら、それぞれに内容を書き込んでいきます。
+Case1.javaについては今回は重要ではないので、とりあえず
+\begin{lstinputlisting}[language=Java,caption=Case1.java]
+	{../case1/src/main/java/Case1.java}
+\end{lstinputlisting}
+
+\newpage
+とでも書き込んでおきます。
+一方のbuild.gradleには、
+\begin{lstinputlisting}[language=Java,caption=build.gradle]
+{../case1/build.gradle}
+\end{lstinputlisting}
+と書き込みます。
+これが、Javaのコンパイルのための必要最小限の記述です。
+gradleでJavaをコンパイルすること、文字はUTF-8でエンコードすること以外の指示はしていません。
+これでコンパイルはできます。プロジェクトフォルダの中で（build.gradleと同じ階層で）
+\begin{shell}[gradle compilejava]
+＄ gradle compileJava
+\end{shell}
+と入力すればGradleが動き始めます。
+最初に起動したときのみ、初期化処理のため少々時間がかかります。
+「BUILD SUCCESSFUL」と出れば成功です。
+フォルダ内にbuildフォルダができ、build/classes/java/main下にコンパイルされたクラスファイルができているはずです。
+以下のようにして実行ができます。
+\begin{shell}[起動確認]
+＄ java -cp build/classes/java/main/ Case1
+\end{shell}
+
+\newpage
+\subsection{練習2：build}
+
+前節ではGradleを使ってJavaのコンパイルをしてみました。
+つぎに、Gradleのビルドを試してみます。
+case1フォルダから抜けて作業フォルダ直下へ戻り、プロジェクト第二号を作ります。
+名前はもちろん自由ですが、本書ではcase2とします。
+Gradle buildの勉強のため、今度は成果物を複雑にしてみます。
+\begin{shell}[プロジェクト2の作成]
+＄ mkdir case2
+＄ cd case2
+＄ mkdir -p src/main/java/controller
+＄ mkdir -p src/main/java/textloader
+＄ mkdir -p src/main/resources
+＄ touch build.gradle
+＄ touch src/main/resources/tortoise.txt
+＄ touch src/main/java/controller/Controller.java
+＄ touch src/main/java/textloader/TextLoader.java
+\end{shell}
+成果物の機能は単純です。controllerパッケージのControllerクラスにmainメソッドを置き、
+mainメソッドからtextloaderパッケージのTextLoaderクラスを呼び出します。
+TextLoaderクラスには、テキストファイル(.txt)の内容を読み取ってコンソールに出力する機能を実装し、
+アクセスしたいテキストファイルをsrc/main/resources下に置きます。
+今回の例では、読み出したいテキストファイルを以下のようにします。
+\begin{lstinputlisting}[caption=src/main/resources/tortoise.txt]
+	{../case2/src/main/resources/tortoise.txt}
+\end{lstinputlisting}
+controller.Controller.javaは以下のとおりです。
+\begin{lstinputlisting}[caption=src/main/java/controller/Controller.java]
+	{../case2/src/main/java/controller/Controller.java}
+\end{lstinputlisting}
+\newpage
+textloader.TextLoader.javaは以下のとおりです。
+\begin{lstinputlisting}[caption=src/main/java/textloader/TextLoader.java]
+	{../case2/src/main/java/textloader/TextLoader.java}
+\end{lstinputlisting}
+
+\newpage
+さて問題のbuild.gradleは
+\begin{lstinputlisting}[caption=build.gradle]
+	{../case2/build.gradle}
+\end{lstinputlisting}
+となります。
+前節から増えた部分は
+\begin{java}[build.gradleの追加項目]
+sourceSets {
+	main {
+		java {
+			srcDirs = ["src/main/java"]
+		}
+		
+		resources {
+			srcDirs = ["src/main/resources"]
+		}
+	}
+}
+\end{java}
+です。
+main\{$\ldots$\}はsrc/main/$\ldots$に対する処理を指定します。
+後々テストと本番を分けるためにsrc/test/$\ldots$が作られることになるので、
+このような括りが存在します。
+srcDirs=$\ldots$の行では、Javaソースコードとリソース（前述の仕様で言えばTextLoaderに渡すテキストファイル）の参照先をそれぞれ指定します。
+前節ではこれを書きませんでしたが、参照先がデフォルトのsrc/main/java、src/main/resourcesとなっていれば明記は必要ないようです。
+でも明記しておいたほうがいいと思います。
+%次のoutput.resourcesDirの行は、src/main/resources下のリソースを成果物のどこに配置するかを指定するものです。
+%あとでjarファイルにまとめる都合上、.classファイルの出力先と同じところに出力させます。
+%java.outPutDirは.classファイルの出力先です。
+%前節のbuild/classes/java/mainです。
+\newpage
+仕込みは以上です。
+Gradleを動かしてみます。
+前節と同じくbuild.gradleと同じ階層で
+\begin{lstlisting}[language=bash]
+＄ gradle compileJava
+\end{lstlisting}
+と打ってコンパイルします。
+うまく行けばbuildフォルダが作られ、build/classes/java/main下に各パッケージの
+.classファイルが出来上がっています。
+複数のパッケージがある場合でも、Gradleはまとめてコンパイルしてくれます。
+しかし、このままでは不完全です。
+試しに
+\begin{lstlisting}[language=bash]
+＄ java -cp build/classes/java/main/ controller.Controller
+\end{lstlisting}
+と打っても、テキストの読み込みに失敗します。
+この段階ではまだリソースファイル(テキストファイル)は組み込まれていないからです。
+
+そこで、gradle compileJavaの代わりに
+\begin{shell}[gradle build]
+＄ gradle build
+\end{shell}
+と打ってみます。すると、%ようやくbuild/classes/java/mainの下にリソースであるtortoise.txtが作られます。
+%再度javaを起動してみると、正しくテキストファイルが読み込まれていることが確認できます。
+%gradle buildで行われることはこれだけではなく、
+build下にフォルダlibsが作られ、更にその中にjarファイルが作られます。
+このjarファイルには、出力されたリソースファイルと.classファイルがまとめられています。
+なので、
+\begin{lstlisting}[language=bash]
+＄ gradle build
+＄ java -cp build/libs/case2.jar controller.Controller
+\end{lstlisting}
+と打てば正常に動作します。
+このjarファイルが成果物になります。
+
+このjarファイルの生成についてもbuild.gradleで設定できますが、
+それは次節で説明します。
+
+\newpage
+\subsection{練習3: jar}
+
+次はビルドの設定、特にjar作成のオプションをいじります。
+例によってcase2を抜けて作業フォルダ直下に戻ってください。
+3つ目のプロジェクトは前節のプロジェクト2号を修正したものになります。
+なので
+\begin{shell}[プロジェクト3の作成]
+＄ cp -r case2 case3
+＄ cd case3　
+＄ gradle clean
+\end{shell}
+とします。
+gradle cleanはbuildフォルダを消去するだけのコマンドです。
+加筆はbuild.gradleのみで、
+\begin{lstinputlisting}[caption=case3/build.gradle]
+	{../case3/build.gradle}
+\end{lstinputlisting}
+とします。
+加筆部分は
+\begin{java}[build.gradleの加筆部分1]
+def mClass = 'controller.Controller'
+def projectName = 'case3'
+\end{java}
+と
+\newpage
+\begin{java}[build.gradleの加筆部分2]
+jar {
+	manifest {
+		attributes('Main-Class':mClass)
+		baseName projectName
+	}
+}
+\end{java}
+になります。
+一つめのdef文は変数の定義です。メインクラスとプロジェクト名を定義しています。
+二つ目はjarのマニフェストファイルの作成です。
+メインクラスの居場所をjar内のMANIFEST.MFに書き込んで、jarファイル単体で実行可能な状態にします。
+この際、先ほど定義した変数を使用しています。
+これでjarの設定ができたので、
+\begin{lstlisting}
+＄ gradle build
+＄ java -jar build/libs/case3.jar
+\end{lstlisting}
+で動作確認ができます。
+これでjavaコマンドにクラスパスとメインクラス名を書く必要がなくなります。
+そのため出来上がったjarファイルを任意の場所に移動させても、java -jar \{name\}.jarで簡単に実行できます。
+ゲームを作りたいときにもおすすめ。
+
+なお、コンパイルとjarの生成を別々に行いたいときは、gradle buildを使わずに
+\begin{lstlisting}[language=bash]
+＄ gradle jar
+\end{lstlisting}
+を使うといいです。
+
+\subsection{練習4: run}
+
+　これまではプロジェクトをビルドした後、javaコマンドで動作確認をしていました。
+しかしもっと楽な方法があります。
+それがgradle runです。
+これでプロジェクトを実行できます。
+そのためにまたbuild.gradleを修正します。
+例によって作業ディレクトリ直下に戻って
+\begin{shell}[プロジェクト4の作成]
+＄ cp -r case3 case4
+＄ cd case4
+＄ gradle clean
+\end{shell}
+を入力します。
+\newpage
+また今回のbuild.gradleは
+\begin{lstinputlisting}[caption=case4/build.gradle]
+	{../case4/build.gradle}
+\end{lstinputlisting}
+となります。
+加筆部分は最初のplugins中の
+\begin{java}[build.gradleの加筆部分1]
+id 'application'
+\end{java}
+と末尾の
+\begin{java}[build.gradleの加筆部分2]
+run {
+	standardInput = System.in
+}
+
+mainClassName = mClass
+\end{java}
+です。
+id 'application'の追加でgradleが実行のための準備を行ってくれます。
+最終行のmainClassNameでメインクラス名を指定し（jarの設定とは別です）、
+run \{$\ldots$\}で細かい設定を書きます。
+standardInput = System.inはコマンドライン入力をしたいときに付け加えます。
+今は使っていませんがこれから使いたい人のために書いておきます。
+
+Gradleの基本的な操作は以上です。
+
+\section{Junitの利用}
+
+\subsection{簡単な単体テスト}
+
+　Gradleなどのビルドツールを使えば、単体テストも比較的楽に行えます。
+というわけで、本章ではプロジェクトのテストについて解説します。
+GradleでJUnitを利用する際、JUnitのバージョンによって扱いが変わります。
+Gradle4.6以降では、JUnitが標準でサポートされているようです。
+そのため、最新版のGradleでは扱いが少し楽になります。
+
+例によってプロジェクトcase5を作ります。
+作業フォルダ直下で
+\begin{lstlisting}
+＄ cp case4 case5
+＄ cd case5
+＄ gradle clean
+\end{lstlisting}
+とします。
+また今回から、src/以下にtestフォルダを作ります。
+\begin{lstlisting}
+＄ mkdir -p src/test/java
+\end{lstlisting}
+このsrc/test/java以下にテストコードを格納します。
+試しに
+\begin{lstinputlisting}[caption=src/test/java/textloader/TextLoaderTest.java]
+	{../case5/src/test/java/textloader/TextLoaderTest.java}
+\end{lstinputlisting}
+を作ってみます。
+テストコードの命名規則については、'ClassName.java'という名前のクラスファイルに対しては'ClassNameTest.java'として、
+パッケージ名やjava/以下のフォルダ構成もテスト対象と一致させます。
+JUnitについては、JUnit5以降はJUnit jupiterなるものを使います。
+そのためインポートするパッケージはorg.junit.jupiterとなります。
+
+\newpage
+今回のbuild.gradleは
+\begin{lstinputlisting}[caption=case5/build.gradle]
+	{../case5/build.gradle}
+\end{lstinputlisting}
+です。
+
+\newpage
+追加部分は
+\begin{java}[build.gradleの追加部分]
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.junit.jupiter:junit-jupiter-api:5.4.2'
+	implementation 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
+}
+
+test {
+	useJUnitPlatform {
+		includeEngines 'junit-jupiter'
+	}
+}
+\end{java}
+となります。
+便宜上、下から見ていきます。
+まずtestの項目で、JUnit platformとjupiterを使用することを宣言します。
+その際依存するパッケージはdependenciesの項目に記載します。
+ここではimplementation文を使っています。
+また、記載した依存パッケージの入手先がrepositoriesの項目に記述されます。
+Gradleが参照するJavaパッケージのリポジトリは主にgoogle、mavenCentral、jcenterの3つです。
+今回はmavenCentralを選びます。特に理由はないです。
+junit-jupiterのバージョンはここでは5.4.2ですが、適宜最新版を指定して下さい。
+
+これで準備は完了です。case5直下で
+\begin{lstlisting}
+＄ gradle test
+\end{lstlisting}
+と打てば単体テストを実行してくれます。
+BUILD SUCCESSFULと出れば成功です。
+build/reports/tests/test以下にhtmlに出力されたレポートが生成されます。
+ブラウザから閲覧できます。
+
+以上が単体テストの簡単な例です。
+今回はjunit.jupiter.apiのうちTestとAssertions中のassertNotNullしか使っていませんが、
+テストに用いる機能はまだまだ大量にあります。
+以降で少しずつ紹介していくつもりです。
+
+
+%Bashはこうなります。
+%
+%\begin{shell}[title={aaa}]
+%mkdir test
+%\end{shell}
+%
+%SQLはこうなります。
+%
+%\begin{sql}[caption={Test.sql}]
+%select * from BOND;
+%\end{sql}
+%
+\end{document}

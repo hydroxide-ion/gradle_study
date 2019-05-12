@@ -1,0 +1,6 @@
+Testudo graeca        : Greek tortoise       : ギリシャリクガメ
+Testudo hermanni      : Hermann's tortoise   : ヘルマンリクガメ
+Agrionemys horsfieldii: Russian tortoise     : ヨツユビリクガメ
+Geochelone elegans    : Indian star tortoise : インドホシガメ
+Geochelone platynota  : Burmese star tortoise: ビルマホシガメ
+Pyxis arachnoides     : spider tortoise      : クモノスガメ

@@ -1,0 +1,29 @@
+plugins {
+	id 'java'	
+}
+
+def mClass = 'controller.Controller'
+def projectName = 'case3'
+
+compileJava {
+	options.encoding = 'UTF-8'
+}
+
+sourceSets {
+	main {
+		java {
+			srcDirs = ["src/main/java"]
+		}
+		
+		resources {
+			srcDirs = ["src/main/resources"]
+		}
+	}
+}
+
+jar {
+	manifest {
+		attributes('Main-Class':mClass)
+		baseName projectName
+	}
+}
